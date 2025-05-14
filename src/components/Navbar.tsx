@@ -9,14 +9,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, Menu, Moon, Search, Sun, Upload, User } from "lucide-react";
+import { Bell, Menu, Search, Upload, User } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 
 const Navbar = () => {
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
 
   return (
-    <nav className="sticky top-0 z-50 w-full backdrop-blur-md bg-white/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-gray-700">
+    <nav className="sticky top-0 z-50 w-full backdrop-blur-md bg-gray-900/80 border-b border-gray-700">
       <div className="container flex items-center justify-between h-16 px-4 mx-auto">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" className="lg:hidden">
@@ -35,16 +35,12 @@ const Navbar = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input 
               placeholder="Search apps, games, developers..." 
-              className="pl-10 bg-gray-100 dark:bg-gray-800 border-none"
+              className="pl-10 bg-gray-800 border-none"
             />
           </div>
         </div>
         
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={toggleTheme}>
-            {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-          </Button>
-          
           <Button variant="ghost" size="icon">
             <Bell className="h-5 w-5" />
           </Button>
@@ -67,6 +63,12 @@ const Navbar = () => {
               <DropdownMenuItem asChild>
                 <Link to="/register">Create Account</Link>
               </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/developer-portal">Developer Portal</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/settings">Settings</Link>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -77,7 +79,7 @@ const Navbar = () => {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input 
             placeholder="Search apps..." 
-            className="pl-10 bg-gray-100 dark:bg-gray-800 border-none"
+            className="pl-10 bg-gray-800 border-none"
           />
         </div>
       </div>
