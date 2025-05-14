@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Github, Heart, Mail, ExternalLink, User, Code } from 'lucide-react';
+import { Github, Heart, Mail, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Footer = () => {
@@ -52,32 +52,6 @@ const Footer = () => {
         </div>
         
         <div className="border-t border-gray-800 mt-12 pt-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div className="bg-gray-800/50 rounded-lg p-4 backdrop-blur-sm border border-gray-700">
-              <h4 className="flex items-center gap-2 font-medium text-lg mb-2">
-                <User className="h-5 w-5 text-primary-purple" /> Developer Information
-              </h4>
-              <p className="text-gray-400">Hrishikesh Gade</p>
-              <p className="text-gray-400">Electronics & Telecommunication Engineering</p>
-              <p className="text-gray-400">Walchand Institute of Technology, Solapur</p>
-              <a href="mailto:hrishigade@gmail.com" className="text-primary-purple hover:underline mt-2 inline-flex items-center">
-                hrishigade@gmail.com <ExternalLink className="ml-1 h-3 w-3" />
-              </a>
-            </div>
-            
-            <div className="bg-gray-800/50 rounded-lg p-4 backdrop-blur-sm border border-gray-700">
-              <h4 className="flex items-center gap-2 font-medium text-lg mb-2">
-                <Code className="h-5 w-5 text-primary-purple" /> Project Details
-              </h4>
-              <p className="text-gray-400">WITVerse Store - The Official App Store for WIT</p>
-              <p className="text-gray-400">Built with React, Tailwind CSS, and Framer Motion</p>
-              <p className="text-gray-400">Database powered by Supabase</p>
-              <a href="https://github.com/hrishikeshgade/witverse" target="_blank" rel="noopener noreferrer" className="text-primary-purple hover:underline mt-2 inline-flex items-center">
-                View Source Code <ExternalLink className="ml-1 h-3 w-3" />
-              </a>
-            </div>
-          </div>
-          
           <p className="text-gray-400 flex items-center justify-center gap-1">
             Made with <Heart size={16} className="text-red-500" fill="currentColor" /> for Walchand Institute of Technology
           </p>
