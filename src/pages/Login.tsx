@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -144,9 +144,9 @@ const Login = () => {
                     </a>
                   </div>
                   <div className="text-sm">
-                    <a href="/register" className="font-medium text-primary hover:text-primary-dark">
+                    <Link to="/register" className="font-medium text-primary hover:text-primary-dark">
                       Create account
-                    </a>
+                    </Link>
                   </div>
                 </div>
                 
