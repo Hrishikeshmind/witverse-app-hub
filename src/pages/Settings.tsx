@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   User, Lock, Image, Mail, School, Palette, Bell, FolderUp, 
   ShieldCheck, CheckCircle, Globe, Bot, MessageSquareText, 
@@ -87,9 +88,9 @@ const Settings = () => {
           exit="exit"
           variants={pageTransition}
         >
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <h1 className="text-3xl font-bold">Settings</h1>
-            <div className="relative w-64">
+            <div className="relative w-full md:w-64">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input 
                 placeholder="Search settings..." 
@@ -101,15 +102,17 @@ const Settings = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="mb-8">
-              <TabsTrigger value="home">Home</TabsTrigger>
-              {settingsSections.map(section => (
-                <TabsTrigger key={section.id} value={section.id} className="flex items-center">
-                  {section.icon}
-                  <span className="hidden sm:inline ml-1">{section.label}</span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
+            <ScrollArea className="w-full pb-4">
+              <TabsList className="mb-8 flex w-max min-w-full space-x-2 p-1">
+                <TabsTrigger value="home">Home</TabsTrigger>
+                {settingsSections.map(section => (
+                  <TabsTrigger key={section.id} value={section.id} className="flex items-center whitespace-nowrap">
+                    {section.icon}
+                    <span className="ml-1">{section.label}</span>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </ScrollArea>
 
             {/* Home Tab - Quick access tiles */}
             <TabsContent value="home" className="space-y-6">
