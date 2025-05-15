@@ -80,16 +80,16 @@ const Settings = () => {
   return (
     <>
       <Navbar />
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-7xl overflow-hidden">
         <motion.div 
-          className="space-y-6"
+          className="space-y-4 sm:space-y-6"
           initial="initial"
           animate="animate"
           exit="exit"
           variants={pageTransition}
         >
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <h1 className="text-3xl font-bold">Settings</h1>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4">
+            <h1 className="text-2xl md:text-3xl font-bold">Settings</h1>
             <div className="relative w-full md:w-64">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input 
@@ -102,8 +102,8 @@ const Settings = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <ScrollArea className="w-full pb-4">
-              <TabsList className="mb-8 flex w-max min-w-full space-x-2 p-1">
+            <div className="w-full overflow-x-auto pb-2 no-scrollbar">
+              <TabsList className="mb-4 sm:mb-6 flex w-max min-w-full gap-1 p-1">
                 <TabsTrigger value="home">Home</TabsTrigger>
                 {settingsSections.map(section => (
                   <TabsTrigger key={section.id} value={section.id} className="flex items-center whitespace-nowrap">
@@ -112,11 +112,11 @@ const Settings = () => {
                   </TabsTrigger>
                 ))}
               </TabsList>
-            </ScrollArea>
+            </div>
 
             {/* Home Tab - Quick access tiles */}
-            <TabsContent value="home" className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <TabsContent value="home" className="space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
                 {quickAccessTiles.map(tile => (
                   <Card 
                     key={tile.id}
@@ -124,7 +124,7 @@ const Settings = () => {
                     onClick={() => setActiveTab(tile.section)}
                   >
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                      <CardTitle className="text-lg">{tile.label}</CardTitle>
+                      <CardTitle className="text-base sm:text-lg">{tile.label}</CardTitle>
                       {tile.icon}
                     </CardHeader>
                     <CardContent>
@@ -136,9 +136,9 @@ const Settings = () => {
                 ))}
               </div>
 
-              <div className="mt-8">
-                <h2 className="text-2xl font-bold mb-4">All Settings</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="mt-4 sm:mt-8">
+                <h2 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-4">All Settings</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
                   {settingsSections.map(section => (
                     <Card 
                       key={section.id}
@@ -147,7 +147,7 @@ const Settings = () => {
                     >
                       <CardHeader className="flex flex-row items-center pb-2">
                         {section.icon}
-                        <CardTitle className="text-lg ml-2">{section.label}</CardTitle>
+                        <CardTitle className="text-base sm:text-lg ml-2">{section.label}</CardTitle>
                       </CardHeader>
                     </Card>
                   ))}
@@ -156,7 +156,7 @@ const Settings = () => {
             </TabsContent>
 
             {/* Account Settings Tab */}
-            <TabsContent value="account" className="space-y-6">
+            <TabsContent value="account" className="space-y-4 sm:space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -258,7 +258,7 @@ const Settings = () => {
             </TabsContent>
 
             {/* Appearance & Theme Tab */}
-            <TabsContent value="appearance" className="space-y-6">
+            <TabsContent value="appearance" className="space-y-4 sm:space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -322,7 +322,7 @@ const Settings = () => {
             </TabsContent>
 
             {/* Notifications Tab */}
-            <TabsContent value="notifications" className="space-y-6">
+            <TabsContent value="notifications" className="space-y-4 sm:space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -374,7 +374,7 @@ const Settings = () => {
             </TabsContent>
 
             {/* App Management Tab */}
-            <TabsContent value="app-management" className="space-y-6">
+            <TabsContent value="app-management" className="space-y-4 sm:space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -476,7 +476,7 @@ const Settings = () => {
             </TabsContent>
 
             {/* Add content for remaining tabs (Privacy & Security, Verification & Trust, etc.) */}
-            <TabsContent value="privacy" className="space-y-6">
+            <TabsContent value="privacy" className="space-y-4 sm:space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -526,7 +526,7 @@ const Settings = () => {
             {/* Add remaining tabs content */}
             
             {/* Others Tab */}
-            <TabsContent value="others" className="space-y-6">
+            <TabsContent value="others" className="space-y-4 sm:space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
