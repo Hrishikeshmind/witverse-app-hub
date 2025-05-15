@@ -41,7 +41,7 @@ const Login = () => {
     // In a real app, you would verify credentials here
     // For now, we'll just simulate a login process
     setTimeout(() => {
-      navigate('/');
+      navigate('/profile'); // Changed from '/' to '/profile'
       setIsAnimating(false);
     }, 2000);
   }
