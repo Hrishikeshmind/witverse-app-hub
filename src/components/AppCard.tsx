@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Star, Download } from "lucide-react";
 import { App } from "@/data/mockData";
+import { Link } from "react-router-dom";
 
 interface AppCardProps {
   app: App;
@@ -18,8 +19,9 @@ const AppCard = ({ app, size = 'md' }: AppCardProps) => {
   };
 
   return (
-    <div 
-      className={`app-card bg-white dark:bg-gray-800 hover-scale ${
+    <Link 
+      to={`/app/${app.id}`} 
+      className={`app-card block bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 hover-scale ${
         size === 'sm' ? 'w-[160px]' : 
         size === 'md' ? 'w-full max-w-xs' : 'w-full max-w-sm'
       }`}
@@ -38,7 +40,7 @@ const AppCard = ({ app, size = 'md' }: AppCardProps) => {
         <img 
           src={app.screenshots[0]} 
           alt={app.name} 
-          className="w-full h-40 object-cover"
+          className="w-full h-40 object-cover rounded-t-xl"
         />
       </div>
       
@@ -73,12 +75,18 @@ const AppCard = ({ app, size = 'md' }: AppCardProps) => {
         </div>
         
         <div className="mt-4">
-          <Button className="w-full bg-primary-purple hover:bg-primary-dark">
+          <Button 
+            className="w-full bg-primary-purple hover:bg-primary-dark"
+            onClick={(e) => {
+              e.preventDefault();
+              // Download functionality is now handled in the details page
+            }}
+          >
             <Download className="w-4 h-4 mr-2" /> Download
           </Button>
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 
