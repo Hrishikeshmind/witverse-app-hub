@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -9,27 +9,13 @@ import { toast } from "@/components/ui/sonner";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { User, Settings, LogOut, Camera } from "lucide-react";
 import Navbar from '@/components/Navbar';
+import { useAuth } from '@/context/AuthContext';
 
 const Profile = () => {
-  const navigate = useNavigate();
+  const { profile, signOut } = useAuth();
   
-  // In a real application, this data would come from an auth context or API
-  // For this demo, we'll use placeholder data
-  const user = {
-    name: "Hrishikesh Gade",
-    email: "hrishikesh@example.com",
-    mobile: "9876543210",
-    department: "ENTC",
-    college: "Walchand Institute of Technology",
-    joinedDate: "May 2023"
-  };
-
-  const handleLogout = () => {
-    toast.success("Logged out successfully");
-    // In a real app, you would clear auth tokens here
-    setTimeout(() => {
-      navigate('/login');
-    }, 1500);
+  const handleLogout = async () => {
+    await signOut();
   };
 
   const containerVariants = {
@@ -51,6 +37,17 @@ const Profile = () => {
       transition: { type: "spring", stiffness: 100 }
     }
   };
+
+  if (!profile) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="h-10 w-10 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -81,9 +78,9 @@ const Profile = () => {
                     <div className="h-full w-full bg-gradient-to-br from-primary-purple to-primary-dark flex items-center justify-center">
                       <div className="relative">
                         <Avatar className="h-24 w-24 border-4 border-background">
-                          <AvatarImage src="" />
+                          <AvatarImage src={profile.avatar_url || ""} />
                           <AvatarFallback className="text-2xl bg-secondary text-secondary-foreground">
-                            {user.name.split(' ').map(n => n[0]).join('')}
+                            {profile.full_name ? profile.full_name.split(' ').map((n: string) => n[0]).join('') : profile.username?.substring(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <Button size="icon" className="absolute -bottom-2 -right-2 rounded-full" variant="secondary">
@@ -94,22 +91,24 @@ const Profile = () => {
                   </AspectRatio>
                 </CardHeader>
                 <CardContent className="pt-6 text-center">
-                  <CardTitle className="text-xl mb-2">{user.name}</CardTitle>
-                  <CardDescription className="text-sm">{user.department} Department</CardDescription>
-                  <CardDescription className="text-sm">{user.college}</CardDescription>
+                  <CardTitle className="text-xl mb-2">{profile.full_name || profile.username}</CardTitle>
+                  <CardDescription className="text-sm">{profile.department || 'Department'} Department</CardDescription>
+                  <CardDescription className="text-sm">{profile.college}</CardDescription>
                   
                   <div className="mt-4 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground text-sm">Email</span>
-                      <span className="font-medium text-sm">{user.email}</span>
+                      <span className="font-medium text-sm">{profile.email || `${profile.mobile}@witverse.app`}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground text-sm">Mobile</span>
-                      <span className="font-medium text-sm">+91 {user.mobile}</span>
+                      <span className="font-medium text-sm">+91 {profile.mobile}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground text-sm">Joined</span>
-                      <span className="font-medium text-sm">{user.joinedDate}</span>
+                      <span className="font-medium text-sm">
+                        {new Date(profile.joined_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}
+                      </span>
                     </div>
                   </div>
                 </CardContent>

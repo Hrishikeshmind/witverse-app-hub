@@ -9,7 +9,168 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      app_downloads: {
+        Row: {
+          app_id: string
+          downloaded_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          app_id: string
+          downloaded_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          app_id?: string
+          downloaded_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_downloads_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "apps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "app_downloads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apps: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          description: string | null
+          developer_id: string
+          downloads: number | null
+          id: string
+          is_faculty_pick: boolean | null
+          is_featured: boolean | null
+          is_new: boolean | null
+          is_trending: boolean | null
+          logo_url: string | null
+          name: string
+          updated_at: string
+          version: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          developer_id: string
+          downloads?: number | null
+          id?: string
+          is_faculty_pick?: boolean | null
+          is_featured?: boolean | null
+          is_new?: boolean | null
+          is_trending?: boolean | null
+          logo_url?: string | null
+          name: string
+          updated_at?: string
+          version?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          developer_id?: string
+          downloads?: number | null
+          id?: string
+          is_faculty_pick?: boolean | null
+          is_featured?: boolean | null
+          is_new?: boolean | null
+          is_trending?: boolean | null
+          logo_url?: string | null
+          name?: string
+          updated_at?: string
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apps_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apps_developer_id_fkey"
+            columns: ["developer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon_name: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          college: string | null
+          department: string | null
+          full_name: string | null
+          id: string
+          joined_at: string
+          mobile: string | null
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          college?: string | null
+          department?: string | null
+          full_name?: string | null
+          id: string
+          joined_at?: string
+          mobile?: string | null
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          college?: string | null
+          department?: string | null
+          full_name?: string | null
+          id?: string
+          joined_at?: string
+          mobile?: string | null
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

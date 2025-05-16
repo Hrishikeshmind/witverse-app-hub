@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -11,6 +11,7 @@ import { toast } from "@/components/ui/sonner";
 import { motion } from "framer-motion";
 import { Phone, Lock } from "lucide-react";
 import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { useAuth } from '@/context/AuthContext';
 
 const loginSchema = z.object({
   mobile: z.string()
@@ -23,8 +24,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const Login = () => {
-  const [isAnimating, setIsAnimating] = useState(false);
-  const navigate = useNavigate();
+  const { signIn, isLoading } = useAuth();
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -34,16 +34,13 @@ const Login = () => {
     },
   });
 
-  function onSubmit(data: LoginFormValues) {
-    setIsAnimating(true);
-    toast.success("Login successful! Redirecting...");
-    
-    // In a real app, you would verify credentials here
-    // For now, we'll just simulate a login process
-    setTimeout(() => {
-      navigate('/profile'); // Changed from '/' to '/profile'
-      setIsAnimating(false);
-    }, 2000);
+  async function onSubmit(data: LoginFormValues) {
+    try {
+      await signIn(data.mobile, data.password);
+      // The redirect will be handled by the RouteGuard
+    } catch (error) {
+      console.error("Login error:", error);
+    }
   }
 
   return (
@@ -156,9 +153,9 @@ const Login = () => {
                   <Button
                     type="submit"
                     className="w-full flex justify-center py-2"
-                    disabled={isAnimating}
+                    disabled={isLoading}
                   >
-                    {isAnimating ? (
+                    {isLoading ? (
                       <motion.div
                         className="h-5 w-5 rounded-full border-2 border-t-transparent"
                         animate={{ rotate: 360 }}
