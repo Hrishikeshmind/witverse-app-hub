@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
-import { Upload as UploadIcon, Loader2, AlertCircle } from 'lucide-react';
+import { Upload as UploadIcon, Loader2, AlertCircle, Sparkles, ImagePlus, FileUp, Info } from 'lucide-react';
 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -250,210 +250,315 @@ const Upload = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col dark:bg-gray-900">
+    <div className="min-h-screen flex flex-col dark:bg-gray-900 bg-gradient-to-b from-gray-900 to-gray-800">
       <Navbar />
       <main className="flex-1 container mx-auto px-4 py-12">
-        <h1 className="text-3xl font-bold mb-2">Upload Your App</h1>
-        <p className="text-gray-600 dark:text-gray-300 mb-8">
-          Share your application with the WIT community.
-        </p>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="col-span-1 lg:col-span-2">
-            <CardHeader>
-              <CardTitle>App Information</CardTitle>
-              <CardDescription>
-                Provide details about your application
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>App Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="My Awesome App" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Describe your app and its features..." 
-                            {...field} 
-                            className="min-h-[120px]"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
+            <div>
+              <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-accent-orange bg-clip-text text-transparent">
+                Upload Your App
+              </h1>
+              <p className="text-gray-400 max-w-xl">
+                Share your innovative application with the WITVerse community and reach thousands of users looking for great apps.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Sparkles className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <Card className="col-span-1 lg:col-span-2 border border-white/10 backdrop-blur-md bg-gray-900/50 shadow-xl animate-fade-in">
+              <CardHeader className="border-b border-white/10">
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  <FileUp className="h-5 w-5 text-primary" />
+                  App Information
+                </CardTitle>
+                <CardDescription>
+                  Provide comprehensive details about your application
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     <FormField
                       control={form.control}
-                      name="category"
+                      name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Category</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                            disabled={isCategoriesLoading}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select category" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {categories?.map((category) => (
-                                <SelectItem key={category.id} value={category.id}>
-                                  {category.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="version"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Version</FormLabel>
+                          <FormLabel className="text-white">App Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="1.0.0" {...field} />
+                            <Input placeholder="Enter your app name" className="bg-gray-800/50 border-white/10" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  </div>
-                  
-                  <div className="space-y-6">
-                    <div>
-                      <FormLabel className="block mb-2">App Logo</FormLabel>
-                      <div className="flex items-center gap-4">
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleLogoChange}
-                          className="max-w-xs"
-                        />
-                        {previewUrl && (
-                          <div className="h-16 w-16 rounded-lg overflow-hidden border">
-                            <img 
-                              src={previewUrl} 
-                              alt="Logo preview" 
-                              className="h-full w-full object-cover"
+                    
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-white">Description</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Describe the purpose, features and benefits of your app..." 
+                              {...field} 
+                              className="min-h-[150px] bg-gray-800/50 border-white/10"
                             />
-                          </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="category"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-white">Category</FormLabel>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value}
+                              disabled={isCategoriesLoading}
+                            >
+                              <FormControl>
+                                <SelectTrigger className="bg-gray-800/50 border-white/10">
+                                  <SelectValue placeholder="Select category" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent className="bg-gray-800 border-white/10">
+                                {categories?.map((category) => (
+                                  <SelectItem key={category.id} value={category.id}>
+                                    {category.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
                         )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="version"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-white">Version</FormLabel>
+                            <FormControl>
+                              <Input placeholder="1.0.0" className="bg-gray-800/50 border-white/10" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <div className="space-y-6 pt-4">
+                      <div className="bg-gray-800/30 p-6 rounded-lg border border-white/10">
+                        <FormLabel className="block mb-3 text-lg font-medium">App Logo</FormLabel>
+                        <div className="flex items-center gap-6">
+                          <div className="flex-1">
+                            <div className="relative group">
+                              <Input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleLogoChange}
+                                className="bg-gray-800/50 border-white/10 hover:border-primary/50 transition-colors"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent-orange/20 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity"></div>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-2 flex items-center gap-1">
+                              <Info className="h-3 w-3" />
+                              Recommended size: 512x512px (Maximum: 5MB)
+                            </p>
+                            {fileErrors.logo && (
+                              <p className="text-sm text-destructive mt-1 flex items-center gap-1">
+                                <AlertCircle className="h-3 w-3" />
+                                {fileErrors.logo}
+                              </p>
+                            )}
+                          </div>
+                          
+                          {previewUrl ? (
+                            <div className="h-24 w-24 rounded-xl overflow-hidden border-2 border-primary/50 shadow-lg shadow-primary/20 transition-all hover:scale-105 duration-300">
+                              <img 
+                                src={previewUrl} 
+                                alt="Logo preview" 
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="h-24 w-24 rounded-xl flex items-center justify-center bg-gray-800/70 border border-dashed border-white/20">
+                              <ImagePlus className="h-8 w-8 text-gray-500" />
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Recommended size: 512x512px (Maximum: 5MB)
-                      </p>
-                      {fileErrors.logo && (
-                        <p className="text-sm text-destructive mt-1">{fileErrors.logo}</p>
+                      
+                      <div className="bg-gray-800/30 p-6 rounded-lg border border-white/10">
+                        <FormLabel className="block mb-3 text-lg font-medium">App File</FormLabel>
+                        <div className="relative group">
+                          <Input
+                            type="file"
+                            accept=".zip,.apk,.ipa"
+                            onChange={handleAppFileChange}
+                            className="bg-gray-800/50 border-white/10 hover:border-primary/50 transition-colors"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent-orange/20 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity"></div>
+                        </div>
+                        <div className="flex items-center gap-2 mt-2">
+                          <div className="flex-1">
+                            <p className="text-sm text-muted-foreground flex items-center gap-1">
+                              <Info className="h-3 w-3" />
+                              Upload your app as .zip, .apk or .ipa file (Maximum: 100MB)
+                            </p>
+                            {fileErrors.app && (
+                              <p className="text-sm text-destructive mt-1 flex items-center gap-1">
+                                <AlertCircle className="h-3 w-3" />
+                                {fileErrors.app}
+                              </p>
+                            )}
+                          </div>
+                          
+                          {appFile && (
+                            <div className="flex items-center px-3 py-1 bg-primary/20 rounded-full">
+                              <span className="text-xs text-primary-foreground">{appFile.name}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {(fileErrors.app || fileErrors.logo) && (
+                        <Alert variant="destructive" className="bg-destructive/10 border-destructive/50 text-destructive">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertTitle>Upload Error</AlertTitle>
+                          <AlertDescription>
+                            Please fix the file errors before submitting your app
+                          </AlertDescription>
+                        </Alert>
                       )}
                     </div>
                     
-                    <div>
-                      <FormLabel className="block mb-2">App File (.zip, .apk, .ipa)</FormLabel>
-                      <Input
-                        type="file"
-                        accept=".zip,.apk,.ipa"
-                        onChange={handleAppFileChange}
-                      />
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Maximum size: 100MB
-                      </p>
-                      {fileErrors.app && (
-                        <p className="text-sm text-destructive mt-1">{fileErrors.app}</p>
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-gradient-to-r from-primary to-accent-orange hover:opacity-90 transition-opacity py-6"
+                      disabled={isUploading || !!fileErrors.app || !!fileErrors.logo}
+                    >
+                      {isUploading ? (
+                        <>
+                          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                          Uploading App...
+                        </>
+                      ) : (
+                        <>
+                          <UploadIcon className="h-5 w-5 mr-2" />
+                          Submit Application
+                        </>
                       )}
+                    </Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+            
+            <div className="col-span-1 space-y-8">
+              <Card className="border border-white/10 backdrop-blur-md bg-gray-900/50 shadow-xl h-fit animate-fade-in delay-100">
+                <CardHeader className="border-b border-white/10">
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    Submission Guidelines
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-5 pt-5">
+                  <div className="space-y-2">
+                    <h3 className="font-bold text-white">App Requirements</h3>
+                    <ul className="space-y-2 pl-5 text-sm text-gray-300">
+                      <li className="flex items-start">
+                        <div className="rounded-full bg-primary/20 p-0.5 mr-2 mt-0.5">
+                          <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                        </div>
+                        Must be relevant to the WIT community
+                      </li>
+                      <li className="flex items-start">
+                        <div className="rounded-full bg-primary/20 p-0.5 mr-2 mt-0.5">
+                          <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                        </div>
+                        Must not contain harmful or offensive content
+                      </li>
+                      <li className="flex items-start">
+                        <div className="rounded-full bg-primary/20 p-0.5 mr-2 mt-0.5">
+                          <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                        </div>
+                        Must include clear description and functionality
+                      </li>
+                      <li className="flex items-start">
+                        <div className="rounded-full bg-primary/20 p-0.5 mr-2 mt-0.5">
+                          <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                        </div>
+                        Must be tested and working properly
+                      </li>
+                    </ul>
+                  </div>
+                  
+                  <div className="space-y-2 pt-2">
+                    <h3 className="font-bold text-white">Review Process</h3>
+                    <div className="space-y-3 text-sm text-gray-300">
+                      <p>
+                        All submitted applications undergo a thorough review process to ensure quality, security, and relevance to the WITVerse community.
+                      </p>
+                      <p>
+                        Our team typically completes reviews within 2-3 business days. You'll receive notifications about the status of your submission.
+                      </p>
                     </div>
-
-                    {(fileErrors.app || fileErrors.logo) && (
-                      <Alert variant="destructive" className="mt-4">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>Error</AlertTitle>
-                        <AlertDescription>
-                          Please fix the file errors before submitting
-                        </AlertDescription>
-                      </Alert>
-                    )}
                   </div>
                   
                   <Button 
-                    type="submit" 
-                    className="w-full" 
-                    disabled={isUploading || !!fileErrors.app || !!fileErrors.logo}
+                    variant="outline" 
+                    className="w-full mt-4 border-white/10 hover:bg-white/5"
+                    onClick={() => navigate('/guidelines')}
                   >
-                    {isUploading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Uploading...
-                      </>
-                    ) : (
-                      <>
-                        <UploadIcon className="h-4 w-4 mr-2" />
-                        Submit App
-                      </>
-                    )}
+                    View Full Guidelines
                   </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-          
-          <div className="col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle>Submission Guidelines</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h3 className="font-semibold">App Requirements</h3>
-                  <ul className="list-disc pl-5 text-sm text-muted-foreground mt-2 space-y-1">
-                    <li>Must be relevant to WIT community</li>
-                    <li>Must not contain harmful or offensive content</li>
-                    <li>Must include clear description and functionality</li>
-                    <li>Must be tested and working properly</li>
-                  </ul>
-                </div>
-                
-                <div>
-                  <h3 className="font-semibold">Review Process</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    All submitted apps will be reviewed for quality, relevance, and compliance with our guidelines before being published to the WITVerse Store.
-                  </p>
-                </div>
-                
-                <Button 
-                  variant="outline" 
-                  className="w-full mt-4"
-                  onClick={() => navigate('/guidelines')}
-                >
-                  View Full Guidelines
-                </Button>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+              
+              <Card className="border border-white/10 backdrop-blur-md bg-gray-900/50 shadow-xl animate-fade-in delay-200">
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                      <Info className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-white">Need Help?</h3>
+                      <p className="text-sm text-gray-400">Check our developer resources</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-2">
+                    <Button 
+                      variant="ghost" 
+                      className="justify-start text-left border border-white/5 bg-white/5 hover:bg-white/10"
+                      onClick={() => navigate('/help')}
+                    >
+                      Developer Documentation
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      className="justify-start text-left border border-white/5 bg-white/5 hover:bg-white/10"
+                      onClick={() => navigate('/review-policy')}
+                    >
+                      App Review Policy
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </main>
