@@ -9,9 +9,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
 import { motion } from "framer-motion";
-import { Phone, Lock } from "lucide-react";
+import { Phone, Lock, LogIn } from "lucide-react";
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { useAuth } from '@/context/AuthContext';
+import { Separator } from "@/components/ui/separator";
 
 const loginSchema = z.object({
   mobile: z.string()
@@ -24,7 +25,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const Login = () => {
-  const { signIn, isLoading } = useAuth();
+  const { signIn, signInWithGoogle, isLoading } = useAuth();
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -42,6 +43,15 @@ const Login = () => {
       console.error("Login error:", error);
     }
   }
+
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+      // Redirect handled by onAuthStateChange in AuthContext
+    } catch (error) {
+      console.error("Google sign-in error:", error);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -152,7 +162,7 @@ const Login = () => {
                 >
                   <Button
                     type="submit"
-                    className="w-full flex justify-center py-2"
+                    className="w-full flex justify-center py-2 gap-2"
                     disabled={isLoading}
                   >
                     {isLoading ? (
@@ -162,8 +172,42 @@ const Login = () => {
                         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                       />
                     ) : (
-                      "Sign in"
+                      <>
+                        <LogIn className="h-4 w-4" />
+                        Sign in
+                      </>
                     )}
+                  </Button>
+                </motion.div>
+                
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <Separator />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Or continue with
+                    </span>
+                  </div>
+                </div>
+                
+                <motion.div whileTap={{ scale: 0.97 }}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full flex justify-center items-center gap-2"
+                    onClick={handleGoogleSignIn}
+                    disabled={isLoading}
+                  >
+                    <svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+                      <g transform="matrix(1, 0, 0, 1, 0, 0)">
+                        <path d="M21.35,11.1H12v3.83h5.31c-0.33,1.55-1.5,2.9-3.13,3.37v2.77h4.93C21.14,19.13,22,16.32,22,13.16 C22,12.37,21.93,11.73,21.35,11.1z" fill="#4285F4"></path>
+                        <path d="M12,22c2.97,0,5.46-0.98,7.28-2.93l-4.93-2.77c-1.24,0.96-2.9,1.5-4.14,1.5c-3.18,0-5.88-2.13-6.83-5.02H0v3.92 C2.3,20,6.63,22,12,22z" fill="#34A853"></path>
+                        <path d="M3.17,12c0-0.82,0.15-1.61,0.4-2.35V5.73H0C0.08,6.47,0,7.23,0,8s0.08,1.53,0,2.27h3.57C3.32,13.61,3.17,12.82,3.17,12 z" fill="#FBBC05"></path>
+                        <path d="M12,3.19c1.88,0,3.14,0.81,3.87,1.5l4.22-4.22C17.95,0.35,14.73,0,12,0C6.63,0,2.3,2,0,5.73l3.57,3.92 C4.9,5.77,7.6,3.19,12,3.19z" fill="#EA4335"></path>
+                      </g>
+                    </svg>
+                    Sign in with Google
                   </Button>
                 </motion.div>
               </form>

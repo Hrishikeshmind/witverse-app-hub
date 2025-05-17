@@ -12,6 +12,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/components/ui/sonner";
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { UserPlus, Mail, Phone, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { useAuth } from '@/context/AuthContext';
+import { Separator } from "@/components/ui/separator";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -37,6 +39,7 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
+  const { signUp, signInWithGoogle, isLoading } = useAuth();
   
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -50,16 +53,33 @@ const Register = () => {
     },
   });
 
-  function onSubmit(data: RegisterFormValues) {
+  async function onSubmit(data: RegisterFormValues) {
     setIsAnimating(true);
-    toast.success("Account created successfully! Redirecting to login...");
     
-    // In a real app, you would register the user here
-    setTimeout(() => {
-      navigate('/login');
+    try {
+      await signUp(data.mobile, data.password, {
+        fullName: data.name,
+        department: "" // Default empty department
+      });
+      
+      setTimeout(() => {
+        navigate('/login');
+        setIsAnimating(false);
+      }, 2000);
+    } catch (error) {
+      console.error("Registration error:", error);
       setIsAnimating(false);
-    }, 2000);
+    }
   }
+
+  const handleGoogleSignUp = async () => {
+    try {
+      await signInWithGoogle();
+      // Redirect will be handled by RouteGuard
+    } catch (error) {
+      console.error("Google sign-up error:", error);
+    }
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -123,6 +143,39 @@ const Register = () => {
                   </div>
                 </motion.div>
               </AspectRatio>
+            </div>
+            
+            <div className="mb-6">
+              <motion.div whileTap={{ scale: 0.97 }}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full flex justify-center items-center gap-2"
+                  onClick={handleGoogleSignUp}
+                  disabled={isLoading}
+                >
+                  <svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+                    <g transform="matrix(1, 0, 0, 1, 0, 0)">
+                      <path d="M21.35,11.1H12v3.83h5.31c-0.33,1.55-1.5,2.9-3.13,3.37v2.77h4.93C21.14,19.13,22,16.32,22,13.16 C22,12.37,21.93,11.73,21.35,11.1z" fill="#4285F4"></path>
+                      <path d="M12,22c2.97,0,5.46-0.98,7.28-2.93l-4.93-2.77c-1.24,0.96-2.9,1.5-4.14,1.5c-3.18,0-5.88-2.13-6.83-5.02H0v3.92 C2.3,20,6.63,22,12,22z" fill="#34A853"></path>
+                      <path d="M3.17,12c0-0.82,0.15-1.61,0.4-2.35V5.73H0C0.08,6.47,0,7.23,0,8s0.08,1.53,0,2.27h3.57C3.32,13.61,3.17,12.82,3.17,12 z" fill="#FBBC05"></path>
+                      <path d="M12,3.19c1.88,0,3.14,0.81,3.87,1.5l4.22-4.22C17.95,0.35,14.73,0,12,0C6.63,0,2.3,2,0,5.73l3.57,3.92 C4.9,5.77,7.6,3.19,12,3.19z" fill="#EA4335"></path>
+                    </g>
+                  </svg>
+                  Sign up with Google
+                </Button>
+              </motion.div>
+            </div>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <Separator />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or sign up with email
+                </span>
+              </div>
             </div>
             
             <Form {...form}>
@@ -308,9 +361,9 @@ const Register = () => {
                     <Button
                       type="submit"
                       className="w-full flex justify-center py-2 gap-2"
-                      disabled={isAnimating}
+                      disabled={isAnimating || isLoading}
                     >
-                      {isAnimating ? (
+                      {isAnimating || isLoading ? (
                         <motion.div
                           className="h-5 w-5 rounded-full border-2 border-t-transparent"
                           animate={{ rotate: 360 }}
