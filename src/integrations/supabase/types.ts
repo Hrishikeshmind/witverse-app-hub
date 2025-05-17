@@ -52,6 +52,7 @@ export type Database = {
           description: string | null
           developer_id: string
           downloads: number | null
+          file_url: string | null
           id: string
           is_faculty_pick: boolean | null
           is_featured: boolean | null
@@ -68,6 +69,7 @@ export type Database = {
           description?: string | null
           developer_id: string
           downloads?: number | null
+          file_url?: string | null
           id?: string
           is_faculty_pick?: boolean | null
           is_featured?: boolean | null
@@ -84,6 +86,7 @@ export type Database = {
           description?: string | null
           developer_id?: string
           downloads?: number | null
+          file_url?: string | null
           id?: string
           is_faculty_pick?: boolean | null
           is_featured?: boolean | null
