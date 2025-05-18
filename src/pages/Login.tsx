@@ -13,6 +13,8 @@ import { Phone, Lock, LogIn } from "lucide-react";
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { useAuth } from '@/context/AuthContext';
 import { Separator } from "@/components/ui/separator";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const loginSchema = z.object({
   mobile: z.string()
@@ -26,6 +28,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 const Login = () => {
   const { signIn, signInWithGoogle, isLoading } = useAuth();
+  const [authError, setAuthError] = useState<string | null>(null);
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -37,6 +40,7 @@ const Login = () => {
 
   async function onSubmit(data: LoginFormValues) {
     try {
+      setAuthError(null); // Reset any previous errors
       await signIn(data.mobile, data.password);
       // The redirect will be handled by the RouteGuard
     } catch (error) {
@@ -46,10 +50,12 @@ const Login = () => {
 
   const handleGoogleSignIn = async () => {
     try {
+      setAuthError(null); // Reset any previous errors
       await signInWithGoogle();
       // Redirect handled by onAuthStateChange in AuthContext
-    } catch (error) {
+    } catch (error: any) {
       console.error("Google sign-in error:", error);
+      setAuthError(error.message || "Failed to sign in with Google");
     }
   };
 
@@ -93,6 +99,13 @@ const Login = () => {
                 </motion.div>
               </AspectRatio>
             </div>
+            
+            {authError && (
+              <Alert variant="destructive" className="mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{authError}</AlertDescription>
+              </Alert>
+            )}
             
             <motion.div 
               className="mb-6"

@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { toast as sonnerToast } from '@/components/ui/sonner';
 
 interface AuthContextProps {
   session: Session | null;
@@ -150,15 +151,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       console.log("Google sign-in initiated:", data);
       
-      if (error) throw error;
+      // If the call didn't immediately throw an error but will be redirecting
+      if (!error) {
+        sonnerToast.info("Redirecting to Google for authentication...");
+      } else {
+        // Handle OAuth provider setup errors
+        if (error.message?.includes("missing OAuth secret") || error.message?.includes("Unsupported provider")) {
+          throw new Error("Google authentication is not fully configured in the server. Please contact the administrator.");
+        }
+        throw error;
+      }
     } catch (error: any) {
+      setIsLoading(false);
+      
       toast({
         variant: "destructive",
         title: "Google login failed",
         description: error.message || "An error occurred during Google login",
       });
       console.error('Google login error:', error);
-      setIsLoading(false);
     }
   };
 
