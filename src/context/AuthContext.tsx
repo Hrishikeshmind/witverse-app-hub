@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -155,9 +154,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!error) {
         sonnerToast.info("Redirecting to Google for authentication...");
       } else {
-        // Handle OAuth provider setup errors
+        // Handle common OAuth provider errors
         if (error.message?.includes("missing OAuth secret") || error.message?.includes("Unsupported provider")) {
           throw new Error("Google authentication is not fully configured in the server. Please contact the administrator.");
+        }
+        // This message specifically handles the 403 error
+        if (error.message?.includes("403")) {
+          throw new Error("Google OAuth access denied (403). This typically happens when Google Cloud Console settings don't match your application. Check your consent screen configuration and authorized domains.");
         }
         throw error;
       }

@@ -13,8 +13,8 @@ import { Phone, Lock, LogIn } from "lucide-react";
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { useAuth } from '@/context/AuthContext';
 import { Separator } from "@/components/ui/separator";
-import { AlertCircle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, Info } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const loginSchema = z.object({
   mobile: z.string()
@@ -29,6 +29,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 const Login = () => {
   const { signIn, signInWithGoogle, isLoading } = useAuth();
   const [authError, setAuthError] = useState<string | null>(null);
+  const [is403Error, setIs403Error] = useState<boolean>(false);
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -41,6 +42,7 @@ const Login = () => {
   async function onSubmit(data: LoginFormValues) {
     try {
       setAuthError(null); // Reset any previous errors
+      setIs403Error(false);
       await signIn(data.mobile, data.password);
       // The redirect will be handled by the RouteGuard
     } catch (error) {
@@ -51,11 +53,19 @@ const Login = () => {
   const handleGoogleSignIn = async () => {
     try {
       setAuthError(null); // Reset any previous errors
+      setIs403Error(false);
       await signInWithGoogle();
       // Redirect handled by onAuthStateChange in AuthContext
     } catch (error: any) {
       console.error("Google sign-in error:", error);
-      setAuthError(error.message || "Failed to sign in with Google");
+      
+      // Check if it's a 403 error
+      if (error.message && error.message.includes("403")) {
+        setIs403Error(true);
+        setAuthError("Google OAuth access denied. Please check your Google Cloud Console configuration.");
+      } else {
+        setAuthError(error.message || "Failed to sign in with Google");
+      }
     }
   };
 
@@ -104,6 +114,22 @@ const Login = () => {
               <Alert variant="destructive" className="mb-6">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{authError}</AlertDescription>
+              </Alert>
+            )}
+            
+            {is403Error && (
+              <Alert className="mb-6">
+                <Info className="h-4 w-4" />
+                <AlertTitle>Google OAuth Configuration Needed</AlertTitle>
+                <AlertDescription className="space-y-2">
+                  <p>A 403 error means Google is blocking the authentication request. To fix this:</p>
+                  <ol className="list-decimal list-inside space-y-1 text-xs ml-2">
+                    <li>Verify your Google Cloud Console has the correct Authorized JavaScript origins (should include your site URL)</li>
+                    <li>Check that the Authorized redirect URIs match your Supabase project settings</li>
+                    <li>Ensure your Google account is added as a test user if your OAuth app is in testing mode</li>
+                    <li>Make sure the Google Cloud OAuth consent screen is properly configured</li>
+                  </ol>
+                </AlertDescription>
               </Alert>
             )}
             
