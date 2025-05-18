@@ -46,7 +46,12 @@ const Navbar = () => {
             <Bell className="h-5 w-5" />
           </Button>
           
-          <Button variant="outline" size="sm" className="hidden md:flex items-center gap-1">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="hidden md:flex items-center gap-1"
+            onClick={() => navigate('/upload')}
+          >
             <Upload className="h-4 w-4 mr-1" />
             Upload App
           </Button>
@@ -72,6 +77,9 @@ const Navbar = () => {
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/settings">Settings</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/upload">Upload App</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
