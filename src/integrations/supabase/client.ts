@@ -35,3 +35,32 @@ export const checkOAuthConfig = async () => {
     return false;
   }
 };
+
+// Helper function to check if email confirmation is required
+export const isEmailConfirmationRequired = async () => {
+  try {
+    const { data, error } = await supabase.functions.invoke('check-auth-settings', {
+      body: {},
+    });
+    
+    if (error) {
+      console.error("Error checking auth settings:", error);
+      // Default to false if there's an error
+      return false;
+    }
+    
+    return data?.confirmationRequired ?? false;
+  } catch (error) {
+    console.error("Error checking if email confirmation is required:", error);
+    return false;
+  }
+};
+
+// Helper to format identifier for login
+export const formatAuthIdentifier = (identifier: string): string => {
+  // Check if the identifier is an email
+  const isEmail = /\S+@\S+\.\S+/.test(identifier);
+  
+  // For mobile numbers, create a consistent email format
+  return isEmail ? identifier : `${identifier}@example.com`;
+};

@@ -1,7 +1,6 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase, checkOAuthConfig } from '@/integrations/supabase/client';
+import { supabase, formatAuthIdentifier } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { toast as sonnerToast } from '@/components/ui/sonner';
 
@@ -10,8 +9,8 @@ interface AuthContextProps {
   user: User | null;
   profile: any | null;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, userData: any) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signUp: (email: string, password: string, userData: any) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
 }
@@ -83,22 +82,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return /\S+@\S+\.\S+/.test(str);
   };
 
-  const signIn = async (identifier: string, password: string) => {
+  const signIn = async (identifier: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       setIsLoading(true);
-      // Determine if the identifier is an email or mobile number
-      const isEmailIdentifier = isEmail(identifier);
-      // For mobile numbers, create a consistent email format
-      const email = isEmailIdentifier ? identifier : `${identifier}@example.com`;
+      
+      // Format the identifier consistently
+      const email = formatAuthIdentifier(identifier);
       
       console.log("Signing in with:", email);
       
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        // Handle specific errors with user-friendly messages
+        if (error.message.includes("Email not confirmed")) {
+          toast({
+            variant: "destructive",
+            title: "Email not confirmed",
+            description: "Please check your inbox and confirm your email before logging in.",
+          });
+          return { success: false, error: "Email not confirmed" };
+        }
+        
+        if (error.message.includes("Invalid login credentials")) {
+          toast({
+            variant: "destructive",
+            title: "Invalid credentials",
+            description: "The email/mobile number or password you entered is incorrect.",
+          });
+          return { success: false, error: "Invalid credentials" };
+        }
+        
+        throw error;
+      }
+
+      // If we reach here, sign in was successful
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully logged in.",
+      });
+      
+      return { success: true };
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -106,12 +133,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: error.message || "An error occurred during login",
       });
       console.error('Login error:', error);
+      return { success: false, error: error.message };
     } finally {
       setIsLoading(false);
     }
   };
 
-  const signUp = async (identifier: string, password: string, userData: any) => {
+  const signUp = async (identifier: string, password: string, userData: any): Promise<{ success: boolean; error?: string }> => {
     try {
       setIsLoading(true);
       
@@ -120,7 +148,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Validate mobile number if it's not an email
       if (!isEmailIdentifier && !/^\d{10}$/.test(identifier)) {
-        throw new Error("Mobile number must be exactly 10 digits");
+        toast({
+          variant: "destructive",
+          title: "Invalid mobile number",
+          description: "Mobile number must be exactly 10 digits",
+        });
+        return { success: false, error: "Mobile number must be exactly 10 digits" };
       }
       
       // Create a consistent email format for mobile numbers
@@ -128,7 +161,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       console.log("Signing up with:", email, "Is email:", isEmailIdentifier);
       
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -136,16 +169,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             full_name: userData.fullName,
             mobile: isEmailIdentifier ? null : identifier,
             department: userData.department
-          }
+          },
+          // For mobile numbers, we can skip email confirmation
+          emailRedirectTo: window.location.origin + '/login',
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('duplicate')) {
+          toast({
+            variant: "destructive",
+            title: "Account already exists",
+            description: "An account with this email or mobile number already exists. Please log in instead.",
+          });
+          return { success: false, error: "Account already exists" };
+        }
+        throw error;
+      }
       
-      toast({
-        title: "Account created!",
-        description: "Your account has been successfully created.",
-      });
+      // Check if email confirmation is required
+      if (data?.user && !data.user.confirmed_at && data.user.email) {
+        toast({
+          title: "Account created!",
+          description: "Please check your email to confirm your account before logging in.",
+        });
+      } else {
+        // For mobile numbers or when confirmation is disabled
+        toast({
+          title: "Account created!",
+          description: "Your account has been successfully created. You can now log in.",
+        });
+      }
+      
+      return { success: true };
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -153,6 +209,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: error.message || "An error occurred during registration",
       });
       console.error('Registration error:', error);
+      return { success: false, error: error.message };
     } finally {
       setIsLoading(false);
     }
@@ -234,7 +291,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, isLoading, signIn, signUp, signOut, signInWithGoogle }}>
+    <AuthContext.Provider value={{ 
+      session, 
+      user, 
+      profile, 
+      isLoading, 
+      signIn, 
+      signUp, 
+      signOut, 
+      signInWithGoogle 
+    }}>
       {children}
     </AuthContext.Provider>
   );

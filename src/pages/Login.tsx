@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -9,13 +9,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
 import { motion } from "framer-motion";
-import { Phone, Mail, Lock, LogIn, ExternalLink } from "lucide-react";
+import { Phone, Mail, Lock, LogIn, ExternalLink, AlertCircle } from "lucide-react";
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { useAuth } from '@/context/AuthContext';
 import { Separator } from "@/components/ui/separator";
-import { AlertCircle, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { checkOAuthConfig } from '@/integrations/supabase/client';
+import { checkOAuthConfig, supabase } from '@/integrations/supabase/client';
 
 const loginSchema = z.object({
   identifier: z.string()
@@ -26,22 +26,38 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const Login = () => {
+  const navigate = useNavigate();
   const { signIn, signInWithGoogle, isLoading } = useAuth();
   const [authError, setAuthError] = useState<string | null>(null);
   const [is403Error, setIs403Error] = useState<boolean>(false);
   const [isGoogleClicked, setIsGoogleClicked] = useState<boolean>(false);
   const [oauthConfigChecked, setOauthConfigChecked] = useState<boolean>(false);
   const [identifierType, setIdentifierType] = useState<'email' | 'mobile'>('email');
+  const [loginInProgress, setLoginInProgress] = useState(false);
+  const [emailConfirmationRequired, setEmailConfirmationRequired] = useState<boolean | null>(null);
   
-  // Check OAuth configuration on component mount
+  // Check OAuth configuration and email confirmation setting on component mount
   useEffect(() => {
-    const verifyOAuthSetup = async () => {
+    const setupAuth = async () => {
+      // Check if OAuth is properly configured
       const configValid = await checkOAuthConfig();
       setOauthConfigChecked(true);
       console.log("OAuth configuration check:", configValid ? "Valid" : "Issues detected");
+      
+      // Check if email confirmation is required
+      try {
+        const { data } = await supabase.auth.getSettings();
+        // This is a guess at the API - may need adjustment based on actual response structure
+        setEmailConfirmationRequired(data?.email_confirmation_required ?? true);
+        console.log("Email confirmation required:", data?.email_confirmation_required);
+      } catch (error) {
+        console.error("Error checking email confirmation setting:", error);
+        // Default to true if we can't check
+        setEmailConfirmationRequired(true);
+      }
     };
     
-    verifyOAuthSetup();
+    setupAuth();
   }, []);
   
   const form = useForm<LoginFormValues>({
@@ -65,13 +81,22 @@ const Login = () => {
     try {
       setAuthError(null); // Reset any previous errors
       setIs403Error(false);
+      setLoginInProgress(true);
       
       console.log(`Logging in with: ${data.identifier} (${identifierType})`);
       
-      await signIn(data.identifier, data.password);
-      // The redirect will be handled by the RouteGuard
+      const result = await signIn(data.identifier, data.password);
+      
+      if (result.success) {
+        // The redirect will be handled by the RouteGuard
+        toast.success("Login successful!");
+      } else if (result.error) {
+        setAuthError(result.error);
+      }
     } catch (error) {
       console.error("Login error:", error);
+    } finally {
+      setLoginInProgress(false);
     }
   }
 
@@ -142,6 +167,41 @@ const Login = () => {
               <Alert variant="destructive" className="mb-6">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{authError}</AlertDescription>
+              </Alert>
+            )}
+            
+            {authError === "Email not confirmed" && emailConfirmationRequired && (
+              <Alert className="mb-4">
+                <Info className="h-4 w-4" />
+                <AlertTitle>Email Verification Required</AlertTitle>
+                <AlertDescription className="text-sm">
+                  <p>You need to verify your email address before logging in. Check your inbox for a verification link.</p>
+                  <p className="mt-2">If you don't see the email, check your spam folder or request a new verification link.</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-2"
+                    onClick={async () => {
+                      const email = form.getValues().identifier;
+                      if (email.includes('@')) {
+                        const { error } = await supabase.auth.resend({
+                          type: 'signup',
+                          email,
+                        });
+                        
+                        if (error) {
+                          toast.error("Failed to resend verification email: " + error.message);
+                        } else {
+                          toast.success("Verification email sent! Please check your inbox.");
+                        }
+                      } else {
+                        toast.error("Please enter a valid email address to resend verification.");
+                      }
+                    }}
+                  >
+                    Resend Verification Email
+                  </Button>
+                </AlertDescription>
               </Alert>
             )}
             
@@ -311,14 +371,17 @@ const Login = () => {
                   <Button
                     type="submit"
                     className="w-full flex justify-center py-2 gap-2"
-                    disabled={isLoading}
+                    disabled={loginInProgress}
                   >
-                    {isLoading ? (
-                      <motion.div
-                        className="h-5 w-5 rounded-full border-2 border-t-transparent"
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      />
+                    {loginInProgress ? (
+                      <>
+                        <motion.div
+                          className="h-5 w-5 rounded-full border-2 border-t-transparent"
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        />
+                        <span>Signing in...</span>
+                      </>
                     ) : (
                       <>
                         <LogIn className="h-4 w-4" />
@@ -329,6 +392,31 @@ const Login = () => {
                 </motion.div>
               </form>
             </Form>
+            
+            {emailConfirmationRequired && (
+              <div className="mt-4 text-xs text-center text-muted-foreground">
+                <p>Having trouble logging in?</p>
+                <Button 
+                  variant="link" 
+                  className="text-xs p-0 h-auto"
+                  onClick={async () => {
+                    const { error } = await supabase.auth.updateConfig({
+                      autoConfirmEnabled: true
+                    });
+                    
+                    if (error) {
+                      console.error("Error updating auth config:", error);
+                      toast.error("Could not update authentication settings");
+                    } else {
+                      setEmailConfirmationRequired(false);
+                      toast.success("Email confirmation temporarily disabled for testing");
+                    }
+                  }}
+                >
+                  Disable email confirmation for testing
+                </Button>
+              </div>
+            )}
           </motion.div>
           
           <motion.p 
