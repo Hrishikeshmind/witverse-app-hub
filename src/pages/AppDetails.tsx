@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -9,6 +10,37 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { ChevronLeft, Download, Star, Clock, User, Tag, Info, ExternalLink } from 'lucide-react';
 import { motion } from "framer-motion";
+
+// Define a more specific type for the app data
+interface AppDetails {
+  id: string;
+  name: string;
+  description?: string | null;
+  file_url?: string | null;
+  logo_url?: string | null;
+  downloads: number;
+  version?: string | null;
+  updated_at: string;
+  category_id?: string | null;
+  developer_id: string;
+  is_featured?: boolean | null;
+  is_trending?: boolean | null;
+  is_new?: boolean | null;
+  is_faculty_pick?: boolean | null;
+  categories?: {
+    id: string;
+    name: string;
+    description?: string | null;
+    icon_name?: string | null;
+  } | null;
+  profiles?: {
+    id: string;
+    username?: string | null;
+    full_name?: string | null;
+    avatar_url?: string | null;
+    department?: string | null;
+  } | null;
+}
 
 const AppDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,7 +60,7 @@ const AppDetails = () => {
         .single();
       
       if (error) throw error;
-      return data;
+      return data as AppDetails;
     },
     enabled: !!id,
   });
@@ -47,8 +79,8 @@ const AppDetails = () => {
       
       // Record download in database
       const downloadData = {
-        app_id: app.id as string,
-        user_id: user.id as string
+        app_id: app.id,
+        user_id: user.id
       };
       
       const { error } = await supabase
@@ -60,9 +92,12 @@ const AppDetails = () => {
       }
       
       // Redirect to download URL
-      window.open(app.file_url, '_blank');
-      
-      toast.success("Download started!");
+      if (app.file_url) {
+        window.open(app.file_url, '_blank');
+        toast.success("Download started!");
+      } else {
+        toast.error("Download URL not available");
+      }
     } catch (error: any) {
       console.error("Download error:", error);
       toast.error(`Failed to download: ${error.message}`);
@@ -122,7 +157,7 @@ const AppDetails = () => {
           <div className="flex-1">
             <h1 className="text-3xl font-bold mb-1">{app.name}</h1>
             <p className="text-lg text-gray-600 dark:text-gray-300 mb-2">
-              {app.developer?.username || "Unknown Developer"}
+              {app.profiles?.username || "Unknown Developer"}
             </p>
             <div className="flex items-center space-x-4 mb-4">
               <div className="bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full text-sm flex items-center">
@@ -133,9 +168,9 @@ const AppDetails = () => {
                 <Download className="w-4 h-4 mr-1" />
                 <span>{app.downloads} downloads</span>
               </div>
-              {app.category && (
+              {app.categories && (
                 <div className="bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full text-sm">
-                  {app.category.name}
+                  {app.categories.name}
                 </div>
               )}
             </div>
@@ -207,7 +242,7 @@ const AppDetails = () => {
                 <User className="w-5 h-5 mr-2 mt-0.5 text-gray-500" />
                 <div>
                   <span className="block text-sm text-gray-500">Developer</span>
-                  <span>{app.developer?.full_name || app.developer?.username || "Unknown"}</span>
+                  <span>{app.profiles?.full_name || app.profiles?.username || "Unknown"}</span>
                 </div>
               </li>
               <li className="flex items-start">
@@ -221,7 +256,7 @@ const AppDetails = () => {
                 <Info className="w-5 h-5 mr-2 mt-0.5 text-gray-500" />
                 <div>
                   <span className="block text-sm text-gray-500">Category</span>
-                  <span>{app.category?.name || "Uncategorized"}</span>
+                  <span>{app.categories?.name || "Uncategorized"}</span>
                 </div>
               </li>
             </ul>
@@ -242,12 +277,12 @@ const AppDetails = () => {
             <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden mr-4">
               <img 
                 src="https://via.placeholder.com/48" 
-                alt={app.developer?.username || "Developer"} 
+                alt={app.profiles?.username || "Developer"} 
                 className="w-full h-full object-cover"
               />
             </div>
             <div>
-              <h3 className="font-medium">{app.developer?.full_name || app.developer?.username || "Unknown Developer"}</h3>
+              <h3 className="font-medium">{app.profiles?.full_name || app.profiles?.username || "Unknown Developer"}</h3>
               <p className="text-sm text-gray-500">App Developer</p>
             </div>
             <Button variant="outline" className="ml-auto" asChild>
