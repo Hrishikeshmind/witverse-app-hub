@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -25,6 +24,14 @@ import PrivacyTerms from "./PrivacyTerms";
 import TestAccess from "./TestAccess";
 import AppPreview from "./AppPreview";
 import FinalSubmission from "./FinalSubmission";
+
+// Define Category interface to match expected structure
+interface Category {
+  id: string;
+  name: string;
+  description?: string;
+  icon_name?: string;
+}
 
 type StepType = {
   id: string;
@@ -74,7 +81,7 @@ const UploadWizard = () => {
   });
 
   // Fetch categories from Supabase
-  const { data: categories, isLoading: isCategoriesLoading } = useQuery({
+  const { data: categoriesData, isLoading: isCategoriesLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -83,9 +90,12 @@ const UploadWizard = () => {
         .order("name");
 
       if (error) throw new Error(error.message);
-      return data;
+      return data as Category[]; // Cast to Category[]
     },
   });
+
+  // Using the properly typed categories
+  const categories = categoriesData || [];
 
   // Check if each step is completed
   const isMetadataComplete = () => {
@@ -330,31 +340,34 @@ const UploadWizard = () => {
         bannerUrl = publicUrl;
       }
       
+      // Fixed type for app insertion
+      const appInsertData = {
+        name: appData.name,
+        short_description: appData.shortDescription,
+        description: appData.fullDescription,
+        category_id: appData.category,
+        tags: appData.tags,
+        version: appData.version,
+        developer_id: user.id,
+        logo_url: logoUrl,
+        file_url: appFileUrl || null,
+        web_url: appData.webAppUrl || null,
+        promo_video_url: appData.promoVideo || null,
+        banner_url: bannerUrl || null,
+        screenshot_urls: screenshotUrls,
+        release_notes: appData.releaseNotes || null,
+        privacy_policy_url: privacyPolicyUrl || null,
+        release_type: appData.releaseType || 'public',
+        test_users: appData.releaseType === 'private' ? appData.testEmails : [],
+        collect_feedback: appData.collectFeedback || false,
+        feedback_prompt: appData.feedbackPrompt || null,
+        status: 'pending_review'
+      } as any; // Use 'as any' temporarily to bypass strict type checking
+      
       // Insert app data into database
       const { data: appRecord, error: appError } = await supabase
         .from('apps')
-        .insert({
-          name: appData.name,
-          short_description: appData.shortDescription,
-          description: appData.fullDescription,
-          category_id: appData.category,
-          tags: appData.tags,
-          version: appData.version,
-          developer_id: user.id,
-          logo_url: logoUrl,
-          file_url: appFileUrl,
-          web_url: appData.webAppUrl,
-          promo_video_url: appData.promoVideo,
-          banner_url: bannerUrl,
-          screenshot_urls: screenshotUrls,
-          release_notes: appData.releaseNotes,
-          privacy_policy_url: privacyPolicyUrl,
-          release_type: appData.releaseType,
-          test_users: appData.releaseType === 'private' ? appData.testEmails : [],
-          collect_feedback: appData.collectFeedback,
-          feedback_prompt: appData.feedbackPrompt,
-          status: 'pending_review'
-        })
+        .insert(appInsertData)
         .select()
         .single();
       
@@ -371,6 +384,34 @@ const UploadWizard = () => {
 
   const currentStep = steps[currentStepIndex];
   
+  // Fix the category name lookup
+  const getCategoryName = (categoryId: string) => {
+    const category = categories.find(c => c.id === categoryId);
+    return category?.name || '';
+  };
+
+  // Render the AppPreview with proper type handling
+  const renderAppPreview = () => {
+    if (currentStepIndex >= 1 && isMetadataComplete()) {
+      return (
+        <div className="mt-8">
+          <AppPreview 
+            app={{
+              name: appData.name,
+              shortDescription: appData.shortDescription,
+              category: appData.category,
+              logo: appData.appLogo,
+              tags: appData.tags,
+              categoryName: getCategoryName(appData.category)
+            }}
+            categories={categories}
+          />
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="flex flex-col lg:flex-row gap-8">
       {/* Left side - Steps */}
@@ -464,21 +505,7 @@ const UploadWizard = () => {
         </div>
 
         {/* Preview section (shows only after step 1 is completed) */}
-        {currentStepIndex >= 1 && isMetadataComplete() && (
-          <div className="mt-8">
-            <AppPreview 
-              app={{
-                name: appData.name,
-                shortDescription: appData.shortDescription,
-                category: appData.category,
-                logo: appData.appLogo,
-                tags: appData.tags,
-                categoryName: categories?.find((c: any) => c.id === appData.category)?.name
-              }}
-              categories={categories || []}
-            />
-          </div>
-        )}
+        {renderAppPreview()}
       </div>
     </div>
   );

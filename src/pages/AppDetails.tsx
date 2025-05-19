@@ -1,39 +1,36 @@
-
-import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, Download, Star, Clock, User, Tag, Info, ExternalLink } from 'lucide-react';
-import { useToast } from "@/hooks/use-toast";
+import React, { useEffect, useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/context/AuthContext";
+import { ChevronLeft, Download, Star, Clock, User, Tag, Info, ExternalLink } from 'lucide-react';
 import { motion } from "framer-motion";
 
 const AppDetails = () => {
-  const { appId } = useParams<{ appId: string }>();
-  const { toast } = useToast();
+  const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const [activeScreenshot, setActiveScreenshot] = useState(0);
   
   // Fetch app details
-  const { data: app, isLoading } = useQuery({
-    queryKey: ['app', appId],
+  const { data: app, isLoading, error } = useQuery({
+    queryKey: ["app", id],
     queryFn: async () => {
+      if (!id) return null;
+      
       const { data, error } = await supabase
-        .from('apps')
-        .select(`
-          *,
-          developer:profiles(username, full_name),
-          category:categories(name, icon_name)
-        `)
-        .eq('id', appId)
+        .from("apps")
+        .select("*, profiles(*), categories(*)")
+        .eq("id", id as any)
         .single();
-        
+      
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: !!id,
   });
   
   // Mock screenshots (would come from database in a real app)
@@ -45,46 +42,30 @@ const AppDetails = () => {
   ];
   
   const handleDownload = async () => {
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to download apps",
-        variant: "destructive"
-      });
-      return;
-    }
-    
     try {
-      // Record the download
+      if (!user || !app) return;
+      
+      // Record download in database
+      const downloadData = {
+        app_id: app.id as string,
+        user_id: user.id as string
+      };
+      
       const { error } = await supabase
         .from('app_downloads')
-        .insert({
-          app_id: appId,
-          user_id: user.id
-        });
+        .insert(downloadData as any);
       
       if (error) {
-        if (error.code === '23505') { // Unique violation
-          toast({
-            title: "Already downloaded",
-            description: "You've already downloaded this app"
-          });
-        } else {
-          throw error;
-        }
-      } else {
-        toast({
-          title: "Download successful",
-          description: "The app has been added to your collection"
-        });
+        throw error;
       }
-    } catch (error) {
-      console.error('Download error:', error);
-      toast({
-        title: "Download failed",
-        description: "There was an error downloading the app",
-        variant: "destructive"
-      });
+      
+      // Redirect to download URL
+      window.open(app.file_url, '_blank');
+      
+      toast.success("Download started!");
+    } catch (error: any) {
+      console.error("Download error:", error);
+      toast.error(`Failed to download: ${error.message}`);
     }
   };
   

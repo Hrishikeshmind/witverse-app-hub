@@ -12,7 +12,7 @@ const storageOptions = {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    flowType: 'implicit' // Explicitly set flow type for OAuth
+    flowType: 'implicit' as const // Type cast to literal type
   }
 };
 
