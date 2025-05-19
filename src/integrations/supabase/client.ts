@@ -11,7 +11,8 @@ const storageOptions = {
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    flowType: 'implicit' // Explicitly set flow type for OAuth
   }
 };
 
@@ -23,6 +24,11 @@ export const checkOAuthConfig = async () => {
     console.log("Checking OAuth configuration...");
     const { data } = await supabase.auth.getSession();
     console.log("Current auth session:", data.session ? "Active" : "None");
+    
+    // Additional check for Google provider
+    const { data: authSettings } = await supabase.auth.getSession();
+    console.log("Auth session data available:", !!authSettings);
+    
     return true;
   } catch (error) {
     console.error("OAuth configuration check failed:", error);

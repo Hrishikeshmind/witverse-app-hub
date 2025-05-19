@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -8,12 +9,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
 import { motion } from "framer-motion";
-import { Phone, Lock, LogIn } from "lucide-react";
+import { Phone, Lock, LogIn, ExternalLink } from "lucide-react";
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { useAuth } from '@/context/AuthContext';
 import { Separator } from "@/components/ui/separator";
 import { AlertCircle, Info } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { checkOAuthConfig } from '@/integrations/supabase/client';
 
 const loginSchema = z.object({
   mobile: z.string()
@@ -30,6 +32,18 @@ const Login = () => {
   const [authError, setAuthError] = useState<string | null>(null);
   const [is403Error, setIs403Error] = useState<boolean>(false);
   const [isGoogleClicked, setIsGoogleClicked] = useState<boolean>(false);
+  const [oauthConfigChecked, setOauthConfigChecked] = useState<boolean>(false);
+  
+  // Check OAuth configuration on component mount
+  useEffect(() => {
+    const verifyOAuthSetup = async () => {
+      const configValid = await checkOAuthConfig();
+      setOauthConfigChecked(true);
+      console.log("OAuth configuration check:", configValid ? "Valid" : "Issues detected");
+    };
+    
+    verifyOAuthSetup();
+  }, []);
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -62,8 +76,8 @@ const Login = () => {
       console.error("Google sign-in error:", error);
       setIsGoogleClicked(false);
       
-      // Check if it's a 403 error
-      if (error.message && error.message.includes("403")) {
+      // Check if it's a 403 error (from the error message or the screenshot)
+      if (error.message && (error.message.includes("403") || error.message.includes("do not have access"))) {
         setIs403Error(true);
         setAuthError("Google OAuth access denied (403). Please check your Google Cloud Console configuration.");
       } else {
@@ -124,15 +138,38 @@ const Login = () => {
               <Alert className="mb-6">
                 <Info className="h-4 w-4" />
                 <AlertTitle>Google OAuth Configuration Needed</AlertTitle>
-                <AlertDescription className="space-y-2">
+                <AlertDescription className="space-y-2 text-sm">
                   <p>A 403 error means Google is blocking the authentication request. To fix this:</p>
-                  <ol className="list-decimal list-inside space-y-1 text-xs ml-2">
-                    <li>Verify your Google Cloud Console has the correct Authorized JavaScript origins (should include your app URL: <code>{window.location.origin}</code>)</li>
-                    <li>Add Authorized redirect URIs in Google Cloud Console: <code>{window.location.origin}/auth/v1/callback</code></li>
-                    <li>Ensure your OAuth consent screen is properly configured with correct app information</li>
-                    <li>If in testing mode, add your Google account as a test user</li>
-                    <li>Check that both Client ID and Client Secret are correctly set in Supabase Auth providers</li>
+                  <ol className="list-decimal list-inside space-y-2 ml-2">
+                    <li>
+                      <strong>Verify Authorized JavaScript origins</strong> in Google Cloud Console: 
+                      <code className="block bg-muted p-1 rounded mt-1">{window.location.origin}</code>
+                    </li>
+                    <li>
+                      <strong>Add Authorized redirect URIs</strong> in Google Cloud Console: 
+                      <code className="block bg-muted p-1 rounded mt-1">{window.location.origin}/auth/v1/callback</code>
+                      <code className="block bg-muted p-1 rounded mt-1">https://iermkyzsfefzhfqcbnmk.supabase.co/auth/v1/callback</code>
+                    </li>
+                    <li>
+                      <strong>Check your OAuth consent screen</strong> configuration
+                    </li>
+                    <li>
+                      <strong>Add your email address</strong> as a test user if in testing mode
+                    </li>
+                    <li>
+                      <strong>Verify both Client ID and Client Secret</strong> are set in Supabase Auth providers
+                    </li>
                   </ol>
+                  <div className="flex items-center justify-center mt-4">
+                    <a 
+                      href="https://console.cloud.google.com/apis/credentials" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center text-primary hover:text-primary/80"
+                    >
+                      Open Google Cloud Console <ExternalLink className="ml-1 h-3 w-3" />
+                    </a>
+                  </div>
                 </AlertDescription>
               </Alert>
             )}
