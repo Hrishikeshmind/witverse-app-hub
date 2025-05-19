@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,17 +10,16 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/components/ui/sonner";
 import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { UserPlus, Mail, Phone, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { UserPlus, Mail, Phone, Lock, Eye, EyeOff, ArrowRight, AlertTriangle } from "lucide-react";
 import { useAuth } from '@/context/AuthContext';
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email format"),
-  mobile: z.string()
-    .min(10, "Mobile number must be exactly 10 digits")
-    .max(10, "Mobile number must be exactly 10 digits")
-    .regex(/^\d{10}$/, "Must be exactly 10 digits"),
+  email: z.string().email("Invalid email format").or(
+    z.string().regex(/^\d{10}$/, "Mobile number must be exactly 10 digits")
+  ),
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
   acceptTerms: z.boolean().refine(val => val === true, {
@@ -38,6 +36,8 @@ const Register = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [identifierType, setIdentifierType] = useState<'email' | 'mobile'>('email');
+  const [registerError, setRegisterError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { signUp, signInWithGoogle, isLoading } = useAuth();
   
@@ -46,18 +46,27 @@ const Register = () => {
     defaultValues: {
       name: "",
       email: "",
-      mobile: "",
       password: "",
       confirmPassword: "",
       acceptTerms: false,
     },
   });
 
+  // Determine if input looks like an email or mobile number
+  const checkIdentifierType = (value: string) => {
+    if (value.includes('@')) {
+      setIdentifierType('email');
+    } else if (/^\d+$/.test(value)) {
+      setIdentifierType('mobile');
+    }
+  };
+
   async function onSubmit(data: RegisterFormValues) {
     setIsAnimating(true);
+    setRegisterError(null);
     
     try {
-      await signUp(data.mobile, data.password, {
+      await signUp(data.email, data.password, {
         fullName: data.name,
         department: "" // Default empty department
       });
@@ -66,18 +75,21 @@ const Register = () => {
         navigate('/login');
         setIsAnimating(false);
       }, 2000);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Registration error:", error);
+      setRegisterError(error.message);
       setIsAnimating(false);
     }
   }
 
   const handleGoogleSignUp = async () => {
     try {
+      setRegisterError(null);
       await signInWithGoogle();
       // Redirect will be handled by RouteGuard
-    } catch (error) {
+    } catch (error: any) {
       console.error("Google sign-up error:", error);
+      setRegisterError(error.message);
     }
   };
 
@@ -125,6 +137,13 @@ const Register = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1, duration: 0.4 }}
           >
+            {registerError && (
+              <Alert variant="destructive" className="mb-6">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>{registerError}</AlertDescription>
+              </Alert>
+            )}
+            
             <div className="mb-6">
               <AspectRatio ratio={7/2} className="bg-muted rounded-md overflow-hidden mb-6">
                 <motion.div
@@ -173,7 +192,7 @@ const Register = () => {
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-background px-2 text-muted-foreground">
-                  Or sign up with email
+                  Or sign up with {identifierType === 'email' ? 'email' : 'mobile'}
                 </span>
               </div>
             </div>
@@ -182,78 +201,58 @@ const Register = () => {
               <form onSubmit={form.handleSubmit(onSubmit)}>
                 <motion.div 
                   className="space-y-4"
-                  variants={containerVariants}
                   initial="hidden"
                   animate="visible"
                 >
-                  <motion.div variants={itemVariants}>
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Full Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter your full name" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </motion.div>
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter your full name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   
-                  <motion.div variants={itemVariants}>
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email Address</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{identifierType === 'email' ? 'Email Address' : 'Mobile Number'}</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                              {identifierType === 'email' ? (
                                 <Mail className="h-4 w-4 text-muted-foreground" />
-                              </div>
-                              <Input 
-                                type="email" 
-                                placeholder="you@example.com" 
-                                className="pl-10" 
-                                {...field} 
-                              />
+                              ) : (
+                                <div className="flex items-center text-muted-foreground">
+                                  <span className="text-sm font-medium">+91</span>
+                                  <span className="mx-1">|</span>
+                                  <Phone className="h-4 w-4" />
+                                </div>
+                              )}
                             </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </motion.div>
-                  
-                  <motion.div variants={itemVariants}>
-                    <FormField
-                      control={form.control}
-                      name="mobile"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Mobile Number</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground">
-                                <span className="text-sm font-medium">+91</span>
-                                <span className="mx-1">|</span>
-                                <Phone className="h-4 w-4" />
-                              </div>
-                              <Input 
-                                placeholder="10-digit mobile number" 
-                                className="pl-20" 
-                                {...field} 
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </motion.div>
+                            <Input 
+                              type={identifierType === 'email' ? "email" : "tel"} 
+                              placeholder={identifierType === 'email' ? "you@example.com" : "10-digit mobile number"} 
+                              className={identifierType === 'email' ? "pl-10" : "pl-20"} 
+                              onChange={(e) => {
+                                checkIdentifierType(e.target.value);
+                                field.onChange(e);
+                              }}
+                              value={field.value} 
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   
                   <motion.div variants={itemVariants}>
                     <FormField
@@ -378,14 +377,14 @@ const Register = () => {
                     </Button>
                   </motion.div>
                   
-                  <motion.div variants={itemVariants} className="text-center mt-4">
+                  <div className="text-center mt-4">
                     <p className="text-sm text-muted-foreground">
                       Already have an account?{" "}
                       <Link to="/login" className="font-medium text-primary hover:text-primary-dark">
                         Sign in
                       </Link>
                     </p>
-                  </motion.div>
+                  </div>
                 </motion.div>
               </form>
             </Form>

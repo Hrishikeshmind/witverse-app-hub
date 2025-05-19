@@ -78,13 +78,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signIn = async (mobile: string, password: string) => {
+  // Helper function to check if a string is an email
+  const isEmail = (str: string): boolean => {
+    return /\S+@\S+\.\S+/.test(str);
+  };
+
+  const signIn = async (identifier: string, password: string) => {
     try {
       setIsLoading(true);
-      // Using regular email format instead of creating a fake domain
-      // Use the actual email if it looks like an email, otherwise assume it's a phone number
-      const isEmail = mobile.includes('@');
-      const email = isEmail ? mobile : `${mobile}@example.com`;
+      // Determine if the identifier is an email or mobile number
+      const isEmailIdentifier = isEmail(identifier);
+      // For mobile numbers, create a consistent email format
+      const email = isEmailIdentifier ? identifier : `${identifier}@example.com`;
+      
+      console.log("Signing in with:", email);
       
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -104,18 +111,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUp = async (mobile: string, password: string, userData: any) => {
+  const signUp = async (identifier: string, password: string, userData: any) => {
     try {
       setIsLoading(true);
       
-      // Validate mobile number format (10 digits)
-      if (!isEmail(mobile) && !/^\d{10}$/.test(mobile)) {
+      // Determine if the identifier is an email or mobile number
+      const isEmailIdentifier = isEmail(identifier);
+      
+      // Validate mobile number if it's not an email
+      if (!isEmailIdentifier && !/^\d{10}$/.test(identifier)) {
         throw new Error("Mobile number must be exactly 10 digits");
       }
       
-      // Use the actual email if it looks like an email, otherwise use a standard format
-      const isEmailInput = isEmail(mobile);
-      const email = isEmailInput ? mobile : `${mobile}@example.com`;
+      // Create a consistent email format for mobile numbers
+      const email = isEmailIdentifier ? identifier : `${identifier}@example.com`;
+      
+      console.log("Signing up with:", email, "Is email:", isEmailIdentifier);
       
       const { error } = await supabase.auth.signUp({
         email,
@@ -123,7 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         options: {
           data: {
             full_name: userData.fullName,
-            mobile: isEmailInput ? null : mobile,
+            mobile: isEmailIdentifier ? null : identifier,
             department: userData.department
           }
         }
@@ -145,11 +156,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsLoading(false);
     }
-  };
-  
-  // Helper function to check if a string is an email
-  const isEmail = (str: string): boolean => {
-    return /\S+@\S+\.\S+/.test(str);
   };
 
   const signInWithGoogle = async () => {

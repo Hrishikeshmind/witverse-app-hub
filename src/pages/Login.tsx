@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
 import { motion } from "framer-motion";
-import { Phone, Lock, LogIn, ExternalLink } from "lucide-react";
+import { Phone, Mail, Lock, LogIn, ExternalLink } from "lucide-react";
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { useAuth } from '@/context/AuthContext';
 import { Separator } from "@/components/ui/separator";
@@ -18,10 +18,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { checkOAuthConfig } from '@/integrations/supabase/client';
 
 const loginSchema = z.object({
-  mobile: z.string()
-    .min(10, "Mobile number must be at least 10 digits")
-    .max(10, "Mobile number must not exceed 10 digits")
-    .regex(/^\d{10}$/, "Must be exactly 10 digits"),
+  identifier: z.string()
+    .min(1, "Email or mobile number is required"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
@@ -33,6 +31,7 @@ const Login = () => {
   const [is403Error, setIs403Error] = useState<boolean>(false);
   const [isGoogleClicked, setIsGoogleClicked] = useState<boolean>(false);
   const [oauthConfigChecked, setOauthConfigChecked] = useState<boolean>(false);
+  const [identifierType, setIdentifierType] = useState<'email' | 'mobile'>('email');
   
   // Check OAuth configuration on component mount
   useEffect(() => {
@@ -48,16 +47,28 @@ const Login = () => {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      mobile: "",
+      identifier: "",
       password: "",
     },
   });
+
+  // Determine if input looks like an email or mobile number
+  const checkIdentifierType = (value: string) => {
+    if (value.includes('@')) {
+      setIdentifierType('email');
+    } else if (/^\d+$/.test(value)) {
+      setIdentifierType('mobile');
+    }
+  };
 
   async function onSubmit(data: LoginFormValues) {
     try {
       setAuthError(null); // Reset any previous errors
       setIs403Error(false);
-      await signIn(data.mobile, data.password);
+      
+      console.log(`Logging in with: ${data.identifier} (${identifierType})`);
+      
+      await signIn(data.identifier, data.password);
       // The redirect will be handled by the RouteGuard
     } catch (error) {
       console.error("Login error:", error);
@@ -216,7 +227,7 @@ const Login = () => {
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with
+                  Or continue with {identifierType === 'email' ? 'email' : 'mobile'}
                 </span>
               </div>
             </div>
@@ -225,21 +236,31 @@ const Login = () => {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
                   control={form.control}
-                  name="mobile"
+                  name="identifier"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Mobile Number</FormLabel>
+                      <FormLabel>{identifierType === 'email' ? 'Email Address' : 'Mobile Number'}</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground">
-                            <span className="text-sm font-medium">+91</span>
-                            <span className="mx-1">|</span>
-                            <Phone className="h-4 w-4" />
+                          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            {identifierType === 'email' ? (
+                              <Mail className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <div className="flex items-center text-muted-foreground">
+                                <span className="text-sm font-medium">+91</span>
+                                <span className="mx-1">|</span>
+                                <Phone className="h-4 w-4" />
+                              </div>
+                            )}
                           </div>
                           <Input 
-                            placeholder="10-digit mobile number" 
-                            className="pl-20" 
-                            {...field} 
+                            placeholder={identifierType === 'email' ? "you@example.com" : "10-digit mobile number"}
+                            className={identifierType === 'email' ? "pl-10" : "pl-20"}
+                            onChange={(e) => {
+                              checkIdentifierType(e.target.value);
+                              field.onChange(e);
+                            }}
+                            value={field.value} 
                           />
                         </div>
                       </FormControl>
