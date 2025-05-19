@@ -12,7 +12,7 @@ const storageOptions = {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    flowType: 'implicit' as const  // Explicitly typed as 'implicit'
+    flowType: 'implicit' as const
   }
 };
 

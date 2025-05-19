@@ -64,7 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId as any)
+        .eq('id', userId)
         .single();
 
       if (error) {
@@ -81,9 +81,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (mobile: string, password: string) => {
     try {
       setIsLoading(true);
-      // Using phone login by constructing an email format that Supabase will accept
-      // Real phone auth would require additional setup
-      const email = `${mobile}@witverse.app`;
+      // Using regular email format instead of creating a fake domain
+      // Use the actual email if it looks like an email, otherwise assume it's a phone number
+      const isEmail = mobile.includes('@');
+      const email = isEmail ? mobile : `${mobile}@example.com`;
+      
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -105,8 +107,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (mobile: string, password: string, userData: any) => {
     try {
       setIsLoading(true);
-      // Format phone as email for Supabase auth
-      const email = `${mobile}@witverse.app`;
+      
+      // Validate mobile number format (10 digits)
+      if (!isEmail(mobile) && !/^\d{10}$/.test(mobile)) {
+        throw new Error("Mobile number must be exactly 10 digits");
+      }
+      
+      // Use the actual email if it looks like an email, otherwise use a standard format
+      const isEmailInput = isEmail(mobile);
+      const email = isEmailInput ? mobile : `${mobile}@example.com`;
       
       const { error } = await supabase.auth.signUp({
         email,
@@ -114,7 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         options: {
           data: {
             full_name: userData.fullName,
-            mobile: mobile,
+            mobile: isEmailInput ? null : mobile,
             department: userData.department
           }
         }
@@ -136,6 +145,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsLoading(false);
     }
+  };
+  
+  // Helper function to check if a string is an email
+  const isEmail = (str: string): boolean => {
+    return /\S+@\S+\.\S+/.test(str);
   };
 
   const signInWithGoogle = async () => {
