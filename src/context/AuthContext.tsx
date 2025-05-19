@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, checkOAuthConfig } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { toast as sonnerToast } from '@/components/ui/sonner';
 
@@ -141,10 +141,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsLoading(true);
       
+      // Check OAuth configuration first
+      await checkOAuthConfig();
+      
       const { error, data } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/profile`
+          redirectTo: `${window.location.origin}/profile`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       });
       
@@ -154,25 +161,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!error) {
         sonnerToast.info("Redirecting to Google for authentication...");
       } else {
-        // Handle common OAuth provider errors
+        // Error handling for specific cases
         if (error.message?.includes("missing OAuth secret") || error.message?.includes("Unsupported provider")) {
-          throw new Error("Google authentication is not fully configured in the server. Please contact the administrator.");
+          throw new Error("Google authentication is not fully configured in Supabase. Both Client ID and Secret must be set.");
         }
-        // This message specifically handles the 403 error
+        
+        // 403 error handling with more specific guidance
         if (error.message?.includes("403")) {
-          throw new Error("Google OAuth access denied (403). This typically happens when Google Cloud Console settings don't match your application. Check your consent screen configuration and authorized domains.");
+          console.error("Google OAuth 403 error details:", error);
+          throw new Error("Google OAuth access denied (403). This typically happens when Google Cloud Console settings don't match your application or your consent screen is not properly configured.");
         }
+        
+        // Handle generic OAuth errors
+        if (error.message?.includes("OAuth")) {
+          throw new Error(`OAuth error: ${error.message}. Please check your Google Cloud Console configuration.`);
+        }
+        
         throw error;
       }
     } catch (error: any) {
       setIsLoading(false);
+      
+      console.error('Google login error details:', error);
       
       toast({
         variant: "destructive",
         title: "Google login failed",
         description: error.message || "An error occurred during Google login",
       });
-      console.error('Google login error:', error);
     }
   };
 

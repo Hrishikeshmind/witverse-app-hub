@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,6 +29,7 @@ const Login = () => {
   const { signIn, signInWithGoogle, isLoading } = useAuth();
   const [authError, setAuthError] = useState<string | null>(null);
   const [is403Error, setIs403Error] = useState<boolean>(false);
+  const [isGoogleClicked, setIsGoogleClicked] = useState<boolean>(false);
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -54,15 +54,18 @@ const Login = () => {
     try {
       setAuthError(null); // Reset any previous errors
       setIs403Error(false);
+      setIsGoogleClicked(true);
+      
       await signInWithGoogle();
       // Redirect handled by onAuthStateChange in AuthContext
     } catch (error: any) {
       console.error("Google sign-in error:", error);
+      setIsGoogleClicked(false);
       
       // Check if it's a 403 error
       if (error.message && error.message.includes("403")) {
         setIs403Error(true);
-        setAuthError("Google OAuth access denied. Please check your Google Cloud Console configuration.");
+        setAuthError("Google OAuth access denied (403). Please check your Google Cloud Console configuration.");
       } else {
         setAuthError(error.message || "Failed to sign in with Google");
       }
@@ -124,10 +127,11 @@ const Login = () => {
                 <AlertDescription className="space-y-2">
                   <p>A 403 error means Google is blocking the authentication request. To fix this:</p>
                   <ol className="list-decimal list-inside space-y-1 text-xs ml-2">
-                    <li>Verify your Google Cloud Console has the correct Authorized JavaScript origins (should include your site URL)</li>
-                    <li>Check that the Authorized redirect URIs match your Supabase project settings</li>
-                    <li>Ensure your Google account is added as a test user if your OAuth app is in testing mode</li>
-                    <li>Make sure the Google Cloud OAuth consent screen is properly configured</li>
+                    <li>Verify your Google Cloud Console has the correct Authorized JavaScript origins (should include your app URL: <code>{window.location.origin}</code>)</li>
+                    <li>Add Authorized redirect URIs in Google Cloud Console: <code>{window.location.origin}/auth/v1/callback</code></li>
+                    <li>Ensure your OAuth consent screen is properly configured with correct app information</li>
+                    <li>If in testing mode, add your Google account as a test user</li>
+                    <li>Check that both Client ID and Client Secret are correctly set in Supabase Auth providers</li>
                   </ol>
                 </AlertDescription>
               </Alert>
@@ -142,17 +146,30 @@ const Login = () => {
                 variant="outline"
                 className="w-full flex justify-center items-center gap-2 py-6"
                 onClick={handleGoogleSignIn}
-                disabled={isLoading}
+                disabled={isLoading || isGoogleClicked}
               >
-                <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
-                  <g transform="matrix(1, 0, 0, 1, 0, 0)">
-                    <path d="M21.35,11.1H12v3.83h5.31c-0.33,1.55-1.5,2.9-3.13,3.37v2.77h4.93C21.14,19.13,22,16.32,22,13.16 C22,12.37,21.93,11.73,21.35,11.1z" fill="#4285F4"></path>
-                    <path d="M12,22c2.97,0,5.46-0.98,7.28-2.93l-4.93-2.77c-1.24,0.96-2.9,1.5-4.14,1.5c-3.18,0-5.88-2.13-6.83-5.02H0v3.92 C2.3,20,6.63,22,12,22z" fill="#34A853"></path>
-                    <path d="M3.17,12c0-0.82,0.15-1.61,0.4-2.35V5.73H0C0.08,6.47,0,7.23,0,8s0.08,1.53,0,2.27h3.57C3.32,13.61,3.17,12.82,3.17,12 z" fill="#FBBC05"></path>
-                    <path d="M12,3.19c1.88,0,3.14,0.81,3.87,1.5l4.22-4.22C17.95,0.35,14.73,0,12,0C6.63,0,2.3,2,0,5.73l3.57,3.92 C4.9,5.77,7.6,3.19,12,3.19z" fill="#EA4335"></path>
-                  </g>
-                </svg>
-                <span className="text-lg">Sign in with Google</span>
+                {isLoading || isGoogleClicked ? (
+                  <>
+                    <motion.div
+                      className="h-5 w-5 rounded-full border-2 border-t-transparent"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    />
+                    <span>Connecting to Google...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+                      <g transform="matrix(1, 0, 0, 1, 0, 0)">
+                        <path d="M21.35,11.1H12v3.83h5.31c-0.33,1.55-1.5,2.9-3.13,3.37v2.77h4.93C21.14,19.13,22,16.32,22,13.16 C22,12.37,21.93,11.73,21.35,11.1z" fill="#4285F4"></path>
+                        <path d="M12,22c2.97,0,5.46-0.98,7.28-2.93l-4.93-2.77c-1.24,0.96-2.9,1.5-4.14,1.5c-3.18,0-5.88-2.13-6.83-5.02H0v3.92 C2.3,20,6.63,22,12,22z" fill="#34A853"></path>
+                        <path d="M3.17,12c0-0.82,0.15-1.61,0.4-2.35V5.73H0C0.08,6.47,0,7.23,0,8s0.08,1.53,0,2.27h3.57C3.32,13.61,3.17,12.82,3.17,12 z" fill="#FBBC05"></path>
+                        <path d="M12,3.19c1.88,0,3.14,0.81,3.87,1.5l4.22-4.22C17.95,0.35,14.73,0,12,0C6.63,0,2.3,2,0,5.73l3.57,3.92 C4.9,5.77,7.6,3.19,12,3.19z" fill="#EA4335"></path>
+                      </g>
+                    </svg>
+                    <span className="text-lg">Sign in with Google</span>
+                  </>
+                )}
               </Button>
             </motion.div>
             
